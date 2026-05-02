@@ -54,6 +54,25 @@ make run-bin   # same as run, but exec the raw binary so stdout/stderr stay in
 
 The built app lives at `stinky_vst/Builds/MacOSX/build/<Config>/stinky_vst.app`. The raw executable is `stinky_vst.app/Contents/MacOS/stinky_vst` — you can launch it under `lldb` directly if you want to attach a debugger.
 
+## Editor / LSP setup (clangd, e.g. nvim + Mason)
+
+clangd needs a compile database to know about include paths (`<JuceHeader.h>`, all `<juce_*/...>` headers) and the project's preprocessor defines (`JUCE_MODULE_AVAILABLE_*`, `JucePlugin_*`). Without one you'll see hundreds of "header not found" / "unknown type" errors in nvim even though the project builds cleanly.
+
+```bash
+make compile-db
+```
+
+This invokes `scripts/gen-compile-flags.sh`, which extracts the include paths, preprocessor defines, SDK, and C++ standard from `xcodebuild -showBuildSettings` and writes them to `compile_flags.txt` at the repo root. clangd auto-discovers it from any source file in the tree. Restart the LSP (`:LspRestart` in nvim) after regenerating.
+
+> **Why not `bear` / `compile_commands.json`?** Bear works by injecting a dynamic library to intercept compiler invocations, but macOS SIP blocks DYLD injection into Apple-signed binaries (including `xcodebuild` and the Xcode toolchain), so it produces an empty database on stock macOS. The `-showBuildSettings` approach sidesteps this by asking xcodebuild for the flags directly.
+
+When to regenerate:
+- After adding/removing source files in Projucer
+- After changing module includes in the `.jucer`
+- After upgrading JUCE
+
+The file is gitignored — it contains absolute paths and must be regenerated per machine.
+
 ## Known issue: JUCE 8.0.12 + Xcode 15 `StrideIterator` error
 
 Building the Standalone target against the macOS 14.2 SDK fails with:

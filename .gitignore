@@ -52,6 +52,14 @@ compile_commands.json
 CTestTestfile.cmake
 _deps
 
+# Un-ignore our hand-written Makefile at the repo root (the line above
+# is from the CMake template and was matching it). compile_commands.json
+# stays ignored since it contains machine-specific absolute paths.
+!/Makefile
+
+# clangd compile database — contains absolute paths, regenerate per-machine.
+compile_flags.txt
+
 ### CMake Patch ###
 # External projects
 *-prefix/
