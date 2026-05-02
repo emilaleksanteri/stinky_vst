@@ -1,45 +1,75 @@
-# JUCE CMake Audio Plugin Template
+# stinky_vst
 
-[![Build](https://img.shields.io/github/actions/workflow/status/anthonyalfimov/JUCE-CMake-Plugin-Template/Validation.yml?branch=main&logo=github)](https://github.com/anthonyalfimov/JUCE-CMake-Plugin-Template/actions)
+A JUCE-based audio plug-in (VST3 + AU).
 
-A template for creating an audio plug-in using [JUCE 7/8](https://github.com/juce-framework/JUCE) and [CMake](https://cmake.org) that can be used as a [drop-in replacement for Projucer](MIGRATE_FROM_PROJUCER.md).
+## Prerequisites
 
-- Works as a drop-in replacement for Projucer, no changes to the source code are necessary! The template can also be used alongside a `.jucer` project.
-- Generates clean Xcode and Visual Studio projects (reasonable source file organisation, only the necessary build schemes for Xcode).
-- Uses CMake to manage dependencies (e.g. JUCE). The template creates a shallow clone of the specified git tag or branch to reduce download times and disk usage.
-- Uses GitHub Actions to build and validate the plugin on MacOS and Windows. Dependencies and compiler output are cached for faster builds.
+- macOS with Xcode 15+ command line tools (`xcode-select --install`)
+- [JUCE](https://github.com/juce-framework/JUCE) checked out somewhere on your machine
+- [Projucer](https://juce.com/download/) (ships inside the JUCE repo at `extras/Projucer/`)
 
-To learn how to replace a Projucer project with this template, see the [**Migrating from Projucer**](MIGRATE_FROM_PROJUCER.md) guide.
+## First-time setup
 
-## Generating IDE project
+1. Open `stinky_vst/stinky_vst.jucer` in Projucer.
+2. In the **Modules** panel, make sure all required JUCE modules point at your local `JUCE/modules/` directory.
+3. **File → Save Project** (⌘S). This regenerates `stinky_vst/Builds/MacOSX/stinky_vst.xcodeproj` and the files in `stinky_vst/JuceLibraryCode/`.
 
-To generate an **Xcode** project, run:
-```sh
-cmake -B Build -G Xcode -D CMAKE_OSX_ARCHITECTURES=arm64\;x86_64 -D CMAKE_OSX_DEPLOYMENT_TARGET=10.15
-```
-The `-D CMAKE_OSX_ARCHITECTURES=arm64\;x86_64` flag is required to build universal binaries.
+The Xcode project is gitignored on purpose — it contains absolute paths that are specific to your machine. The `.jucer` file is the source of truth.
 
-The `-D CMAKE_OSX_DEPLOYMENT_TARGET=10.15` flag sets the minimum MacOS version to be supported.
+## Building from the CLI
 
----
-
-To generate a **Visual Studio 2026 (18)** project, run:
-```sh
-cmake -B Build -G "Visual Studio 18 2026"
-```
-
-## Building
-
-To build the generated IDE project from the command line, run:
-```sh
-cmake --build Build --config Debug
+```bash
+make            # build VST3 + AU (Release)
+make vst3       # VST3 only
+make au         # AU only
+make standalone # Standalone .app
+make clean      # clean all build products
+make list       # show xcode schemes
+make help
 ```
 
-## References
+Override the config with `CONFIG=`:
 
-Based on the [JUCE/examples/CMake/AudioPlugin](https://github.com/juce-framework/JUCE/tree/master/examples/CMake/AudioPlugin) template.
+```bash
+make CONFIG=Debug vst3
+```
 
-Inspired by:
+Build artifacts land in `stinky_vst/Builds/MacOSX/build/<Config>/`. Xcode also auto-installs the plug-ins to:
 
-- [sudara/pamplejuce](https://github.com/sudara/pamplejuce)
-- [eyalamirmusic/JUCECmakeRepoPrototype](https://github.com/eyalamirmusic/JUCECmakeRepoPrototype)
+- VST3 → `~/Library/Audio/Plug-Ins/VST3/`
+- AU   → `~/Library/Audio/Plug-Ins/Components/`
+
+Your DAW should pick them up after a rescan.
+
+## Running the Standalone (dev loop)
+
+The Standalone target wraps the plug-in in a small host so you can play with it without a DAW.
+
+```bash
+make debug     # build Debug standalone and launch it
+make run       # same, but Release config
+make run-bin   # same as run, but exec the raw binary so stdout/stderr stay in
+               # your terminal (handy for printf/DBG debugging from nvim)
+```
+
+The built app lives at `stinky_vst/Builds/MacOSX/build/<Config>/stinky_vst.app`. The raw executable is `stinky_vst.app/Contents/MacOS/stinky_vst` — you can launch it under `lldb` directly if you want to attach a debugger.
+
+## Known issue: JUCE 8.0.12 + Xcode 15 `StrideIterator` error
+
+Building the Standalone target against the macOS 14.2 SDK fails with:
+
+```
+No type named 'value_type' in 'std::iterator_traits<juce::CoreAudioClasses::CoreAudioInternal::StrideIterator<const float *>>'
+```
+
+JUCE's `StrideIterator` in `modules/juce_audio_devices/native/juce_CoreAudio_mac.cpp` is missing the iterator typedefs that the stricter libc++ shipped in Xcode 15 requires. Patch the struct definition (around line 1062) by adding these lines at the top:
+
+```cpp
+using iterator_category = std::random_access_iterator_tag;
+using value_type        = typename std::iterator_traits<Iterator>::value_type;
+using difference_type   = ptrdiff_t;
+using pointer           = typename std::iterator_traits<Iterator>::pointer;
+using reference         = typename std::iterator_traits<Iterator>::reference;
+```
+
+The patch lives in your local JUCE checkout, not this repo. It will need to be re-applied if you upgrade JUCE.
