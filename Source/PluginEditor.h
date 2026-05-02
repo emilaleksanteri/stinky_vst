@@ -8,26 +8,25 @@
 
 #pragma once
 
-#include <JuceHeader.h>
 #include "PluginProcessor.h"
+#include "Square.h"
+#include <JuceHeader.h>
 
 //==============================================================================
 /**
-*/
-class Stinky_vstAudioProcessorEditor  : public juce::AudioProcessorEditor
-{
+ */
+class Stinky_vstAudioProcessorEditor : public juce::AudioProcessorEditor {
 public:
-    Stinky_vstAudioProcessorEditor (Stinky_vstAudioProcessor&);
-    ~Stinky_vstAudioProcessorEditor() override;
+  Stinky_vstAudioProcessorEditor(Stinky_vstAudioProcessor &);
+  ~Stinky_vstAudioProcessorEditor() override;
 
-    //==============================================================================
-    void paint (juce::Graphics&) override;
-    void resized() override;
+  //==============================================================================
+  void paint(juce::Graphics &) override;
+  void resized() override;
 
 private:
-    // This reference is provided as a quick way for your editor to
-    // access the processor object that created it.
-    Stinky_vstAudioProcessor& audioProcessor;
+  Square square;
+  Stinky_vstAudioProcessor &audioProcessor;
 
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (Stinky_vstAudioProcessorEditor)
+  JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Stinky_vstAudioProcessorEditor)
 };
