@@ -64,7 +64,9 @@ The built app: `build-<config>/stinky_vst_artefacts/<Config>/Standalone/stinky_v
 
 ## Adding source files
 
-Edit `CMakeLists.txt`, add the new file under `target_sources(stinky_vst PRIVATE ...)`, and rebuild. CMake re-runs automatically when `CMakeLists.txt` changes, so a plain `make vst3` is enough — no separate "regenerate" step.
+Edit `CMakeLists.txt`, add the new file under `target_sources(stinky_vst PRIVATE ...)`, and rebuild. CMake re-runs automatically when `CMakeLists.txt` changes, so a plain `make vst3` (or any other target) is enough — no separate "regenerate" step.
+
+Note for the LSP: `compile_commands.json` at the repo root is symlinked to `build-debug/compile_commands.json`, so clangd only sees a new file after a **Debug** build (`make CONFIG=Debug ...` or `make compile-db`). Pure Release builds won't update what nvim is reading.
 
 ## Editor / LSP setup (clangd, e.g. nvim + Mason)
 
