@@ -128,7 +128,7 @@ void Stinky_vstAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
 
   for (int channel = 0; channel < totalNumInputChannels; ++channel) {
     auto *channelData = buffer.getWritePointer(channel);
-    sinewaves[channel].process(channelData, totalNumInputChannels);
+    sinewaves[channel].process(channelData, buffer.getNumSamples());
   }
 }
 
