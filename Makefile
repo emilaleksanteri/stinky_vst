@@ -1,49 +1,66 @@
-PROJECT    := stinky_vst
-XCODE_PROJ := $(PROJECT)/Builds/MacOSX/$(PROJECT).xcodeproj
-SYMROOT    := $(abspath $(PROJECT)/Builds/MacOSX/build)
-CONFIG     ?= Release
+PROJECT  := stinky_vst
+CONFIG   ?= Release
+JUCE_DIR ?= $(HOME)/Developer/JUCE
 
-APP := $(SYMROOT)/$(CONFIG)/$(PROJECT).app
+# One build dir per config so Debug and Release coexist without reconfiguring.
+BUILD := build-$(shell echo $(CONFIG) | tr '[:upper:]' '[:lower:]')
+
+CMAKE_FLAGS := \
+  -DCMAKE_BUILD_TYPE=$(CONFIG) \
+  -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+  -DJUCE_DIR=$(JUCE_DIR)
+
+CMAKE_BUILD := cmake --build $(BUILD) --target
+
+# JUCE places artifacts under <build>/<target>_artefacts/<Config>/<Format>/.
+APP := $(BUILD)/$(PROJECT)_artefacts/$(CONFIG)/Standalone/$(PROJECT).app
 BIN := $(APP)/Contents/MacOS/$(PROJECT)
-XCB := xcodebuild -project $(XCODE_PROJ) -configuration $(CONFIG) SYMROOT=$(SYMROOT)
 
-.PHONY: all vst3 au standalone run run-bin debug compile-db clean list help
+.PHONY: all configure vst3 au standalone run run-bin debug clean compile-db list help
 
 all: vst3 au
 
-vst3:
-	$(XCB) -scheme "$(PROJECT) - VST3" build
+# Configure once. Re-runs are a no-op when CMakeCache.txt is up to date.
+$(BUILD)/CMakeCache.txt:
+	cmake -S . -B $(BUILD) $(CMAKE_FLAGS)
 
-au:
-	$(XCB) -scheme "$(PROJECT) - AU" build
+configure: $(BUILD)/CMakeCache.txt
 
-standalone:
-	$(XCB) -scheme "$(PROJECT) - Standalone Plugin" build
+vst3: configure
+	$(CMAKE_BUILD) $(PROJECT)_VST3
+
+au: configure
+	$(CMAKE_BUILD) $(PROJECT)_AU
+
+standalone: configure
+	$(CMAKE_BUILD) $(PROJECT)_Standalone
 
 run: standalone
 	@echo "Launching $(APP)"
 	open $(APP)
 
 run-bin: standalone
-	@echo "Running $(BIN) (stdout/stderr in this terminal, Ctrl-C to quit)"
+	@echo "Running $(BIN) (Ctrl-C to quit)"
 	$(BIN)
 
 debug:
 	$(MAKE) CONFIG=Debug run
 
-# Generate compile_flags.txt at the repo root so clangd (nvim LSP) knows
-# include paths and defines. Pulls flags from `xcodebuild -showBuildSettings`
-# rather than intercepting compiler invocations (avoids macOS SIP blocking
-# tools like `bear`). Run after adding/removing sources or upgrading JUCE.
+# Symlink CMake's compile_commands.json from the Debug build dir to the
+# repo root so clangd auto-discovers it. Always uses Debug — that's the
+# config you want for editor flags (DEBUG=1, asserts active, etc.).
 compile-db:
-	@scripts/gen-compile-flags.sh $(XCODE_PROJ) $(PROJECT)
-	@echo "Restart your nvim LSP (e.g. :LspRestart) to pick it up."
+	cmake -S . -B build-debug -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DJUCE_DIR=$(JUCE_DIR)
+	ln -sf build-debug/compile_commands.json compile_commands.json
+	@echo ""
+	@echo "compile_commands.json -> build-debug/compile_commands.json"
+	@echo "Restart your nvim LSP (e.g. :LspRestart)."
 
 clean:
-	rm -rf $(SYMROOT)
+	rm -rf build-debug build-release compile_commands.json
 
-list:
-	xcodebuild -project $(XCODE_PROJ) -list
+list: configure
+	@cmake --build $(BUILD) --target help 2>/dev/null | grep -E "^\.\.\. $(PROJECT)" || cmake --build $(BUILD) --target help
 
 help:
 	@echo "Build targets:"
@@ -55,21 +72,22 @@ help:
 	@echo ""
 	@echo "Run / debug:"
 	@echo "  make run        build standalone (CONFIG) and launch the .app"
-	@echo "  make run-bin    build standalone (CONFIG) and exec the binary directly"
-	@echo "                  (stdout/stderr stays in your terminal)"
+	@echo "  make run-bin    build and exec the binary directly (stdout in terminal)"
 	@echo "  make debug      shortcut for CONFIG=Debug make run"
 	@echo ""
 	@echo "Editor / LSP:"
-	@echo "  make compile-db generate compile_flags.txt for clangd"
+	@echo "  make compile-db generate compile_commands.json for clangd"
 	@echo ""
 	@echo "Other:"
-	@echo "  make clean      clean all build products"
-	@echo "  make list       list xcode schemes/targets"
+	@echo "  make configure  run cmake -S . -B \$$BUILD only"
+	@echo "  make clean      remove all build dirs and compile_commands.json"
+	@echo "  make list       list cmake targets"
 	@echo ""
 	@echo "Variables:"
-	@echo "  CONFIG=Debug|Release   (default: Release)"
+	@echo "  CONFIG=Debug|Release   (default: Release; controls build dir name)"
+	@echo "  JUCE_DIR=/path/to/JUCE (default: \$$HOME/Developer/JUCE)"
 	@echo ""
 	@echo "Examples:"
-	@echo "  make debug                    # build Debug standalone and launch"
-	@echo "  make CONFIG=Debug standalone  # build Debug standalone only"
-	@echo "  make run-bin                  # launch Release standalone with stdout"
+	@echo "  make debug                          # build Debug standalone and launch"
+	@echo "  make CONFIG=Debug all               # debug VST3 + AU into build-debug/"
+	@echo "  make JUCE_DIR=/opt/JUCE configure   # use a different JUCE checkout"

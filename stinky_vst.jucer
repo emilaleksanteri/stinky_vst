@@ -4,12 +4,14 @@
               addUsingNamespaceToJuceHeader="0" jucerFormatVersion="1">
   <MAINGROUP id="DNOLUI" name="stinky_vst">
     <GROUP id="{9280444C-37C8-0C31-D126-8372A2272BA6}" name="Source">
+      <FILE id="DpcvpG" name="Square.cpp" compile="1" resource="0" file="Source/Square.cpp"/>
       <FILE id="SCBKVx" name="PluginProcessor.cpp" compile="1" resource="0"
             file="Source/PluginProcessor.cpp"/>
       <FILE id="PgOkIj" name="PluginProcessor.h" compile="0" resource="0"
             file="Source/PluginProcessor.h"/>
       <FILE id="fy57Ej" name="PluginEditor.cpp" compile="1" resource="0"
             file="Source/PluginEditor.cpp"/>
+      <FILE id="TmYIBR" name="Square.h" compile="0" resource="0" file="Source/Square.h"/>
       <FILE id="i5Syin" name="PluginEditor.h" compile="0" resource="0" file="Source/PluginEditor.h"/>
     </GROUP>
   </MAINGROUP>

@@ -7,6 +7,7 @@
 */
 
 #include "PluginProcessor.h"
+#include "juce_graphics/juce_graphics.h"
 #include "PluginEditor.h"
 
 //==============================================================================
@@ -26,7 +27,7 @@ Stinky_vstAudioProcessorEditor::~Stinky_vstAudioProcessorEditor()
 void Stinky_vstAudioProcessorEditor::paint (juce::Graphics& g)
 {
     // (Our component is opaque, so we must completely fill the background with a solid colour)
-    g.fillAll (getLookAndFeel().findColour (juce::ResizableWindow::backgroundColourId));
+    g.fillAll (juce::Colours::black);
 
     g.setColour (juce::Colours::white);
     g.setFont (juce::FontOptions (15.0f));
