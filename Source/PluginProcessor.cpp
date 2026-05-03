@@ -8,6 +8,9 @@
 
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
+#include "juce_audio_processors/juce_audio_processors.h"
+#include "juce_audio_processors_headless/juce_audio_processors_headless.h"
+#include <memory>
 
 //==============================================================================
 Stinky_vstAudioProcessor::Stinky_vstAudioProcessor()
@@ -20,7 +23,8 @@ Stinky_vstAudioProcessor::Stinky_vstAudioProcessor()
 #endif
               .withOutput("Output", juce::AudioChannelSet::stereo(), true)
 #endif
-      )
+              ),
+      state(*this, nullptr, "params", createParameters())
 #endif
 {
 }
@@ -81,6 +85,9 @@ void Stinky_vstAudioProcessor::prepareToPlay(double sampleRate,
 
   sinewaves.resize(getTotalNumOutputChannels());
 
+  freqParam = state.getRawParameterValue("freqHz");
+  playParam = state.getRawParameterValue("play");
+
   for (auto &wave : sinewaves) {
     wave.prepare(sampleRate);
   }
@@ -126,8 +133,13 @@ void Stinky_vstAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
   for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
     buffer.clear(i, 0, buffer.getNumSamples());
 
+  float freq = freqParam->load();
+  bool shouldPlay = static_cast<bool>(playParam->load());
+
   for (int channel = 0; channel < totalNumInputChannels; ++channel) {
     auto *channelData = buffer.getWritePointer(channel);
+    sinewaves[channel].setFrequency(freq);
+    sinewaves[channel].setAmplitude(shouldPlay ? 0.4f : 0.0f);
     sinewaves[channel].process(channelData, buffer.getNumSamples());
   }
 }
@@ -160,4 +172,13 @@ void Stinky_vstAudioProcessor::setStateInformation(const void *data,
 // This creates new instances of the plugin..
 juce::AudioProcessor *JUCE_CALLTYPE createPluginFilter() {
   return new Stinky_vstAudioProcessor();
+}
+
+juce::AudioProcessorValueTreeState::ParameterLayout
+Stinky_vstAudioProcessor::createParameters() {
+  return {
+      std::make_unique<juce::AudioParameterFloat>(
+          juce::ParameterID{"freqHz"}, "Frequency", 20.0f, 20000.0f, 220.0f),
+      std::make_unique<juce::AudioParameterBool>(juce::ParameterID{"play"},
+                                                 "Play", true)};
 }

@@ -9,7 +9,7 @@
 #pragma once
 
 #include "PluginProcessor.h"
-#include "Square.h"
+#include "juce_gui_basics/juce_gui_basics.h"
 #include <JuceHeader.h>
 
 //==============================================================================
@@ -25,8 +25,14 @@ public:
   void resized() override;
 
 private:
-  Square square;
+  juce::Slider frequencySlider;
+  juce::TextButton playBtn;
+  juce::Label frequencyLabel{"FrequencyLabel", "Frequency"};
+
   Stinky_vstAudioProcessor &audioProcessor;
+
+  juce::AudioProcessorValueTreeState::SliderAttachment freqSliderAttachment;
+  juce::AudioProcessorValueTreeState::ButtonAttachment playBtnAttachment;
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Stinky_vstAudioProcessorEditor)
 };

@@ -9,6 +9,7 @@
 #pragma once
 
 #include "SineWave.h"
+#include "juce_audio_processors/juce_audio_processors.h"
 #include <JuceHeader.h>
 
 //==============================================================================
@@ -53,7 +54,15 @@ public:
   void getStateInformation(juce::MemoryBlock &destData) override;
   void setStateInformation(const void *data, int sizeInBytes) override;
 
+  juce::AudioProcessorValueTreeState &getState() { return state; }
+
 private:
   std::vector<SineWave> sinewaves;
+
+  juce::AudioProcessorValueTreeState state;
+  juce::AudioProcessorValueTreeState::ParameterLayout createParameters();
+  std::atomic<float> *freqParam;
+  std::atomic<float> *playParam;
+
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Stinky_vstAudioProcessor)
 };
