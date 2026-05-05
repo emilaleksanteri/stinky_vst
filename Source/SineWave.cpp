@@ -3,7 +3,7 @@
 
 void SineWave::prepare(double sampleRate) {
   currSampleRate = static_cast<float>(sampleRate);
-  smoothedFreq.reset(sampleRate, 1.0f);
+  smoothedFreq.reset(sampleRate, 0.05f);
   smoothedFreq.setCurrentAndTargetValue(getFrequency());
 }
 
