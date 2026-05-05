@@ -18,7 +18,9 @@ Stinky_vstAudioProcessorEditor::Stinky_vstAudioProcessorEditor(
     : AudioProcessorEditor(&p), audioProcessor(p),
       freqSliderAttachment(audioProcessor.getState(), "freqHz",
                            frequencySlider),
-      playBtnAttachment(audioProcessor.getState(), "play", playBtn) {
+      playBtnAttachment(audioProcessor.getState(), "play", playBtn),
+      oscillatorToggleAttachment(audioProcessor.getState(), "oscillator-type",
+                                 oscillatorToggle) {
   // Make sure that before the constructor has finished, you've set the
   // editor's size to whatever you need it to be.
 
@@ -30,6 +32,11 @@ Stinky_vstAudioProcessorEditor::Stinky_vstAudioProcessorEditor(
   playBtn.setToggleState(true, juce::NotificationType::dontSendNotification);
   playBtn.setClickingTogglesState(true);
 
+  oscillatorToggle.setButtonText("SineWave");
+  oscillatorToggle.setToggleState(false,
+                                  juce::NotificationType::dontSendNotification);
+  oscillatorToggle.setClickingTogglesState(true);
+
   playBtn.setColour(juce::TextButton::ColourIds::buttonOnColourId,
                     juce::Colours::green);
   playBtn.setColour(juce::TextButton::ColourIds::buttonColourId,
@@ -40,7 +47,13 @@ Stinky_vstAudioProcessorEditor::Stinky_vstAudioProcessorEditor(
     playBtn.setButtonText(isPlaying ? "Playing" : "Play");
   };
 
+  oscillatorToggle.onClick = [this]() {
+    const bool useSaw = oscillatorToggle.getToggleState();
+    oscillatorToggle.setButtonText(useSaw ? "SawWave" : "SineWave");
+  };
+
   addAndMakeVisible(playBtn);
+  addAndMakeVisible(oscillatorToggle);
 
   frequencyLabel.setJustificationType(juce::Justification::centred);
 
@@ -68,4 +81,6 @@ void Stinky_vstAudioProcessorEditor::resized() {
   frequencySlider.setBounds(getWidth() / 2 - 50, getHeight() / 2 - 100, 100,
                             200);
   playBtn.setBounds(getWidth() / 2 - 50, getHeight() / 2 + 120, 100, 20);
+  oscillatorToggle.setBounds(getWidth() / 2 - 50, getHeight() / 2 + 150, 100,
+                             20);
 }

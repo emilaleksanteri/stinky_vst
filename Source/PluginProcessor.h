@@ -68,6 +68,7 @@ private:
   juce::AudioProcessorValueTreeState::ParameterLayout createParameters();
   std::atomic<float> *freqParam;
   std::atomic<float> *playParam;
+  std::atomic<float> *oscToggleParam;
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Stinky_vstAudioProcessor)
 };

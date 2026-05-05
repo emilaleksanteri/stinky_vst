@@ -90,6 +90,7 @@ void Stinky_vstAudioProcessor::prepareToPlay(double sampleRate,
 
   freqParam = state.getRawParameterValue("freqHz");
   playParam = state.getRawParameterValue("play");
+  oscToggleParam = state.getRawParameterValue("oscillator-type");
 
   // default oscillator is SineWave
   for (auto &osc : oscillators) {
@@ -156,6 +157,9 @@ void Stinky_vstAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
 
   float freq = freqParam->load();
   bool shouldPlay = static_cast<bool>(playParam->load());
+  bool useSaw = static_cast<bool>(oscToggleParam->load());
+
+  setOscillatorType(useSaw);
 
   for (int channel = 0; channel < totalNumInputChannels; ++channel) {
     auto *channelData = buffer.getWritePointer(channel);
@@ -201,5 +205,8 @@ Stinky_vstAudioProcessor::createParameters() {
       std::make_unique<juce::AudioParameterFloat>(
           juce::ParameterID{"freqHz"}, "Frequency", 20.0f, 20000.0f, 220.0f),
       std::make_unique<juce::AudioParameterBool>(juce::ParameterID{"play"},
-                                                 "Play", true)};
+                                                 "Play", true),
+      std::make_unique<juce::AudioParameterBool>(
+          juce::ParameterID{"oscillator-type"}, "OscillatorType", false),
+  };
 }
