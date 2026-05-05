@@ -84,11 +84,16 @@ void Stinky_vstAudioProcessor::prepareToPlay(double sampleRate,
                                              int samplesPerBlock) {
 
   sinewaves.resize(getTotalNumOutputChannels());
+  sawwaves.resize(getTotalNumOutputChannels());
 
   freqParam = state.getRawParameterValue("freqHz");
   playParam = state.getRawParameterValue("play");
 
   for (auto &wave : sinewaves) {
+    wave.prepare(sampleRate);
+  }
+
+  for (auto &wave : sawwaves) {
     wave.prepare(sampleRate);
   }
 }
@@ -138,9 +143,12 @@ void Stinky_vstAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
 
   for (int channel = 0; channel < totalNumInputChannels; ++channel) {
     auto *channelData = buffer.getWritePointer(channel);
-    sinewaves[channel].setFrequency(freq);
-    sinewaves[channel].setAmplitude(shouldPlay ? 0.4f : 0.0f);
-    sinewaves[channel].process(channelData, buffer.getNumSamples());
+    sawwaves[channel].setFrequency(freq);
+    sawwaves[channel].setAmplitude(shouldPlay ? 0.4f : 0.0f);
+    sawwaves[channel].process(channelData, buffer.getNumSamples());
+    // sinewaves[channel].setFrequency(freq);
+    // sinewaves[channel].setAmplitude(shouldPlay ? 0.4f : 0.0f);
+    // sawwaves[channel].process(channelData, buffer.getNumSamples());
   }
 }
 

@@ -8,6 +8,7 @@
 
 #pragma once
 
+#include "SawWave.h"
 #include "SineWave.h"
 #include "juce_audio_processors/juce_audio_processors.h"
 #include <JuceHeader.h>
@@ -58,6 +59,7 @@ public:
 
 private:
   std::vector<SineWave> sinewaves;
+  std::vector<SawWave> sawwaves;
 
   juce::AudioProcessorValueTreeState state;
   juce::AudioProcessorValueTreeState::ParameterLayout createParameters();
