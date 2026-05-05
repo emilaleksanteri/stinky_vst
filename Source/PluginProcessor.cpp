@@ -8,6 +8,8 @@
 
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
+#include "SawWave.h"
+#include "SineWave.h"
 #include "juce_audio_processors/juce_audio_processors.h"
 #include "juce_audio_processors_headless/juce_audio_processors_headless.h"
 #include <memory>
@@ -83,18 +85,16 @@ void Stinky_vstAudioProcessor::changeProgramName(int index,
 void Stinky_vstAudioProcessor::prepareToPlay(double sampleRate,
                                              int samplesPerBlock) {
 
-  sinewaves.resize(getTotalNumOutputChannels());
-  sawwaves.resize(getTotalNumOutputChannels());
+  oscillators.resize(getTotalNumOutputChannels());
+  currSampleRate = sampleRate;
 
   freqParam = state.getRawParameterValue("freqHz");
   playParam = state.getRawParameterValue("play");
 
-  for (auto &wave : sinewaves) {
-    wave.prepare(sampleRate);
-  }
-
-  for (auto &wave : sawwaves) {
-    wave.prepare(sampleRate);
+  // default oscillator is SineWave
+  for (auto &osc : oscillators) {
+    osc = std::make_unique<SineWave>();
+    osc->prepare(sampleRate);
   }
 }
 
@@ -129,6 +129,22 @@ bool Stinky_vstAudioProcessor::isBusesLayoutSupported(
 }
 #endif
 
+void Stinky_vstAudioProcessor::setOscillatorType(bool useSaw) {
+  for (auto &osc : oscillators) {
+    float freq = osc->getFrequency();
+    float amp = osc->getAmplitude();
+
+    if (useSaw) {
+      osc = std::make_unique<SawWave>();
+    } else {
+      osc = std::make_unique<SineWave>();
+    }
+    osc->prepare(currSampleRate);
+    osc->setFrequency(freq);
+    osc->setAmplitude(amp);
+  }
+}
+
 void Stinky_vstAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
                                             juce::MidiBuffer &midiMessages) {
   juce::ScopedNoDenormals noDenormals;
@@ -143,12 +159,9 @@ void Stinky_vstAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
 
   for (int channel = 0; channel < totalNumInputChannels; ++channel) {
     auto *channelData = buffer.getWritePointer(channel);
-    sawwaves[channel].setFrequency(freq);
-    sawwaves[channel].setAmplitude(shouldPlay ? 0.4f : 0.0f);
-    sawwaves[channel].process(channelData, buffer.getNumSamples());
-    // sinewaves[channel].setFrequency(freq);
-    // sinewaves[channel].setAmplitude(shouldPlay ? 0.4f : 0.0f);
-    // sawwaves[channel].process(channelData, buffer.getNumSamples());
+    oscillators[channel]->setFrequency(freq);
+    oscillators[channel]->setAmplitude(shouldPlay ? 0.4f : 0.0f);
+    oscillators[channel]->process(channelData, buffer.getNumSamples());
   }
 }
 

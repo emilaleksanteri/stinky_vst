@@ -2,9 +2,10 @@
 #ifndef SINEWAVE_H
 #define SINEWAVE_H
 
+#include "Oscillator.h"
 #include "juce_audio_basics/juce_audio_basics.h"
 #include <numbers>
-class SineWave {
+class SineWave : public Oscillator {
 public:
   void prepare(double sampleRate);
   void process(float *output, const int numSamples);

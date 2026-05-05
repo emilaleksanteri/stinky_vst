@@ -8,10 +8,12 @@
 
 #pragma once
 
+#include "Oscillator.h"
 #include "SawWave.h"
 #include "SineWave.h"
 #include "juce_audio_processors/juce_audio_processors.h"
 #include <JuceHeader.h>
+#include <memory>
 
 //==============================================================================
 /**
@@ -54,12 +56,13 @@ public:
   //==============================================================================
   void getStateInformation(juce::MemoryBlock &destData) override;
   void setStateInformation(const void *data, int sizeInBytes) override;
+  void setOscillatorType(bool useSaw);
 
   juce::AudioProcessorValueTreeState &getState() { return state; }
 
 private:
-  std::vector<SineWave> sinewaves;
-  std::vector<SawWave> sawwaves;
+  std::vector<std::unique_ptr<Oscillator>> oscillators;
+  double currSampleRate;
 
   juce::AudioProcessorValueTreeState state;
   juce::AudioProcessorValueTreeState::ParameterLayout createParameters();

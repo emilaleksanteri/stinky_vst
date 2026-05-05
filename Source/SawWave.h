@@ -2,8 +2,10 @@
 #ifndef SAWWAVE_H
 #define SAWWAVE_H
 
+#include "Oscillator.h"
 #include "juce_audio_basics/juce_audio_basics.h"
-class SawWave {
+
+class SawWave : public Oscillator {
 public:
   void prepare(double sampleRate);
   void process(float *output, const int numSamples);
