@@ -63,6 +63,8 @@ public:
 private:
   std::vector<std::unique_ptr<Oscillator>> oscillators;
   double currSampleRate;
+  std::atomic<bool> oscillatorTypeChanged{false};
+  bool currentlyUsingSaw = false;
 
   juce::AudioProcessorValueTreeState state;
   juce::AudioProcessorValueTreeState::ParameterLayout createParameters();

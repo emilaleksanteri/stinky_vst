@@ -7,6 +7,7 @@
 */
 
 #include "PluginEditor.h"
+#include "PluginParameters.h"
 #include "PluginProcessor.h"
 #include "juce_events/juce_events.h"
 #include "juce_graphics/juce_graphics.h"
@@ -16,10 +17,12 @@
 Stinky_vstAudioProcessorEditor::Stinky_vstAudioProcessorEditor(
     Stinky_vstAudioProcessor &p)
     : AudioProcessorEditor(&p), audioProcessor(p),
-      freqSliderAttachment(audioProcessor.getState(), "freqHz",
+      freqSliderAttachment(audioProcessor.getState(), PluginParameters::FREQ_HZ,
                            frequencySlider),
-      playBtnAttachment(audioProcessor.getState(), "play", playBtn),
-      oscillatorToggleAttachment(audioProcessor.getState(), "oscillator-type",
+      playBtnAttachment(audioProcessor.getState(), PluginParameters::PLAY,
+                        playBtn),
+      oscillatorToggleAttachment(audioProcessor.getState(),
+                                 PluginParameters::OSCILLATOR_TYPE,
                                  oscillatorToggle) {
   // Make sure that before the constructor has finished, you've set the
   // editor's size to whatever you need it to be.
@@ -32,7 +35,7 @@ Stinky_vstAudioProcessorEditor::Stinky_vstAudioProcessorEditor(
   playBtn.setToggleState(true, juce::NotificationType::dontSendNotification);
   playBtn.setClickingTogglesState(true);
 
-  oscillatorToggle.setButtonText("SineWave");
+  oscillatorToggle.setButtonText("Sine Wave");
   oscillatorToggle.setToggleState(false,
                                   juce::NotificationType::dontSendNotification);
   oscillatorToggle.setClickingTogglesState(true);
@@ -49,7 +52,7 @@ Stinky_vstAudioProcessorEditor::Stinky_vstAudioProcessorEditor(
 
   oscillatorToggle.onClick = [this]() {
     const bool useSaw = oscillatorToggle.getToggleState();
-    oscillatorToggle.setButtonText(useSaw ? "SawWave" : "SineWave");
+    oscillatorToggle.setButtonText(useSaw ? "Saw Wave" : "Sine Wave");
   };
 
   addAndMakeVisible(playBtn);

@@ -8,6 +8,7 @@
 
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
+#include "PluginParameters.h"
 #include "SawWave.h"
 #include "SineWave.h"
 #include "juce_audio_processors/juce_audio_processors.h"
@@ -88,9 +89,10 @@ void Stinky_vstAudioProcessor::prepareToPlay(double sampleRate,
   oscillators.resize(getTotalNumOutputChannels());
   currSampleRate = sampleRate;
 
-  freqParam = state.getRawParameterValue("freqHz");
-  playParam = state.getRawParameterValue("play");
-  oscToggleParam = state.getRawParameterValue("oscillator-type");
+  freqParam = state.getRawParameterValue(PluginParameters::FREQ_HZ);
+  playParam = state.getRawParameterValue(PluginParameters::PLAY);
+  oscToggleParam =
+      state.getRawParameterValue(PluginParameters::OSCILLATOR_TYPE);
 
   // default oscillator is SineWave
   for (auto &osc : oscillators) {
@@ -159,7 +161,14 @@ void Stinky_vstAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
   bool shouldPlay = static_cast<bool>(playParam->load());
   bool useSaw = static_cast<bool>(oscToggleParam->load());
 
-  setOscillatorType(useSaw);
+  if (useSaw != currentlyUsingSaw) {
+    currentlyUsingSaw = useSaw;
+    oscillatorTypeChanged.store(true);
+  }
+
+  if (oscillatorTypeChanged.exchange(false)) {
+    setOscillatorType(currentlyUsingSaw);
+  }
 
   for (int channel = 0; channel < totalNumInputChannels; ++channel) {
     auto *channelData = buffer.getWritePointer(channel);
@@ -203,10 +212,12 @@ juce::AudioProcessorValueTreeState::ParameterLayout
 Stinky_vstAudioProcessor::createParameters() {
   return {
       std::make_unique<juce::AudioParameterFloat>(
-          juce::ParameterID{"freqHz"}, "Frequency", 20.0f, 20000.0f, 220.0f),
-      std::make_unique<juce::AudioParameterBool>(juce::ParameterID{"play"},
-                                                 "Play", true),
+          juce::ParameterID{PluginParameters::FREQ_HZ}, "Frequency", 20.0f,
+          20000.0f, 220.0f),
       std::make_unique<juce::AudioParameterBool>(
-          juce::ParameterID{"oscillator-type"}, "OscillatorType", false),
+          juce::ParameterID{PluginParameters::PLAY}, "Play", true),
+      std::make_unique<juce::AudioParameterBool>(
+          juce::ParameterID{PluginParameters::OSCILLATOR_TYPE},
+          "OscillatorType", false),
   };
 }
