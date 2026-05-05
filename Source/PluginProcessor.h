@@ -11,6 +11,7 @@
 #include "Oscillator.h"
 #include "SawWave.h"
 #include "SineWave.h"
+#include "WaveType.h"
 #include "juce_audio_processors/juce_audio_processors.h"
 #include <JuceHeader.h>
 #include <memory>
@@ -56,21 +57,20 @@ public:
   //==============================================================================
   void getStateInformation(juce::MemoryBlock &destData) override;
   void setStateInformation(const void *data, int sizeInBytes) override;
-  void setOscillatorType(bool useSaw);
+  void setOscillatorType(OscillatorTypes oscType);
 
   juce::AudioProcessorValueTreeState &getState() { return state; }
 
 private:
   std::vector<std::unique_ptr<Oscillator>> oscillators;
   double currSampleRate;
-  std::atomic<bool> oscillatorTypeChanged{false};
-  bool currentlyUsingSaw = false;
+  std::atomic<OscillatorTypes> currOscillatorType{OscillatorTypes::Sine};
 
   juce::AudioProcessorValueTreeState state;
   juce::AudioProcessorValueTreeState::ParameterLayout createParameters();
   std::atomic<float> *freqParam;
   std::atomic<float> *playParam;
-  std::atomic<float> *oscToggleParam;
+  std::atomic<float> *oscTypeParam;
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Stinky_vstAudioProcessor)
 };

@@ -16,7 +16,7 @@ CMAKE_BUILD := cmake --build $(BUILD) --target
 APP := $(BUILD)/$(PROJECT)_artefacts/$(CONFIG)/Standalone/$(PROJECT).app
 BIN := $(APP)/Contents/MacOS/$(PROJECT)
 
-.PHONY: all configure vst3 au standalone run run-bin debug clean compile-db list help
+.PHONY: all configure vst3 au standalone run run-bin debug debug-bin clean compile-db list help
 
 all: vst3 au
 
@@ -46,6 +46,9 @@ run-bin: standalone
 debug:
 	$(MAKE) CONFIG=Debug run
 
+debug-bin:
+	$(MAKE) CONFIG=Debug run-bin
+
 # Symlink CMake's compile_commands.json from the Debug build dir to the
 # repo root so clangd auto-discovers it. Always uses Debug — that's the
 # config you want for editor flags (DEBUG=1, asserts active, etc.).
@@ -74,6 +77,7 @@ help:
 	@echo "  make run        build standalone (CONFIG) and launch the .app"
 	@echo "  make run-bin    build and exec the binary directly (stdout in terminal)"
 	@echo "  make debug      shortcut for CONFIG=Debug make run"
+	@echo "  make debug-bin  shortcut for CONFIG=Debug make run-bin (logs in terminal)"
 	@echo ""
 	@echo "Editor / LSP:"
 	@echo "  make compile-db generate compile_commands.json for clangd"

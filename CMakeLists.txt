@@ -43,9 +43,9 @@ target_sources(stinky_vst
     PRIVATE
         Source/PluginProcessor.cpp
         Source/PluginEditor.cpp
-        Source/Square.cpp
         Source/SineWave.cpp
         Source/SawWave.cpp
+        Source/TriangleWave.cpp
 )
 
 target_compile_definitions(stinky_vst

@@ -9,6 +9,7 @@
 #include "PluginEditor.h"
 #include "PluginParameters.h"
 #include "PluginProcessor.h"
+#include "WaveType.h"
 #include "juce_events/juce_events.h"
 #include "juce_graphics/juce_graphics.h"
 #include "juce_gui_basics/juce_gui_basics.h"
@@ -21,9 +22,9 @@ Stinky_vstAudioProcessorEditor::Stinky_vstAudioProcessorEditor(
                            frequencySlider),
       playBtnAttachment(audioProcessor.getState(), PluginParameters::PLAY,
                         playBtn),
-      oscillatorToggleAttachment(audioProcessor.getState(),
-                                 PluginParameters::OSCILLATOR_TYPE,
-                                 oscillatorToggle) {
+      oscillatorTypeAttachment(audioProcessor.getState(),
+                               PluginParameters::OSCILLATOR_TYPE,
+                               oscillatorType) {
   // Make sure that before the constructor has finished, you've set the
   // editor's size to whatever you need it to be.
 
@@ -35,11 +36,6 @@ Stinky_vstAudioProcessorEditor::Stinky_vstAudioProcessorEditor(
   playBtn.setToggleState(true, juce::NotificationType::dontSendNotification);
   playBtn.setClickingTogglesState(true);
 
-  oscillatorToggle.setButtonText("Sine Wave");
-  oscillatorToggle.setToggleState(false,
-                                  juce::NotificationType::dontSendNotification);
-  oscillatorToggle.setClickingTogglesState(true);
-
   playBtn.setColour(juce::TextButton::ColourIds::buttonOnColourId,
                     juce::Colours::green);
   playBtn.setColour(juce::TextButton::ColourIds::buttonColourId,
@@ -50,13 +46,13 @@ Stinky_vstAudioProcessorEditor::Stinky_vstAudioProcessorEditor(
     playBtn.setButtonText(isPlaying ? "Playing" : "Play");
   };
 
-  oscillatorToggle.onClick = [this]() {
-    const bool useSaw = oscillatorToggle.getToggleState();
-    oscillatorToggle.setButtonText(useSaw ? "Saw Wave" : "Sine Wave");
-  };
+  oscillatorType.addItem(WaveType::SINE, OscillatorTypes::Sine);
+  oscillatorType.addItem(WaveType::SAW, OscillatorTypes::Saw);
+  oscillatorType.addItem(WaveType::TRIANGLE, OscillatorTypes::Triangle);
+  oscillatorType.setSelectedId(1);
+  addAndMakeVisible(oscillatorType);
 
   addAndMakeVisible(playBtn);
-  addAndMakeVisible(oscillatorToggle);
 
   frequencyLabel.setJustificationType(juce::Justification::centred);
 
@@ -84,6 +80,6 @@ void Stinky_vstAudioProcessorEditor::resized() {
   frequencySlider.setBounds(getWidth() / 2 - 50, getHeight() / 2 - 100, 100,
                             200);
   playBtn.setBounds(getWidth() / 2 - 50, getHeight() / 2 + 120, 100, 20);
-  oscillatorToggle.setBounds(getWidth() / 2 - 50, getHeight() / 2 + 150, 100,
-                             20);
+
+  oscillatorType.setBounds(getWidth() / 2 - 50, getHeight() / 2 + 150, 100, 60);
 }

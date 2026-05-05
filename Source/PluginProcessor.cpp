@@ -11,8 +11,11 @@
 #include "PluginParameters.h"
 #include "SawWave.h"
 #include "SineWave.h"
+#include "TriangleWave.h"
+#include "WaveType.h"
 #include "juce_audio_processors/juce_audio_processors.h"
 #include "juce_audio_processors_headless/juce_audio_processors_headless.h"
+#include "juce_core/system/juce_PlatformDefs.h"
 #include <memory>
 
 //==============================================================================
@@ -91,8 +94,7 @@ void Stinky_vstAudioProcessor::prepareToPlay(double sampleRate,
 
   freqParam = state.getRawParameterValue(PluginParameters::FREQ_HZ);
   playParam = state.getRawParameterValue(PluginParameters::PLAY);
-  oscToggleParam =
-      state.getRawParameterValue(PluginParameters::OSCILLATOR_TYPE);
+  oscTypeParam = state.getRawParameterValue(PluginParameters::OSCILLATOR_TYPE);
 
   // default oscillator is SineWave
   for (auto &osc : oscillators) {
@@ -132,16 +134,23 @@ bool Stinky_vstAudioProcessor::isBusesLayoutSupported(
 }
 #endif
 
-void Stinky_vstAudioProcessor::setOscillatorType(bool useSaw) {
+void Stinky_vstAudioProcessor::setOscillatorType(OscillatorTypes oscType) {
   for (auto &osc : oscillators) {
     float freq = osc->getFrequency();
     float amp = osc->getAmplitude();
 
-    if (useSaw) {
-      osc = std::make_unique<SawWave>();
-    } else {
+    switch (oscType) {
+    case OscillatorTypes::Sine:
       osc = std::make_unique<SineWave>();
+      break;
+    case OscillatorTypes::Saw:
+      osc = std::make_unique<SawWave>();
+      break;
+    case OscillatorTypes::Triangle:
+      osc = std::make_unique<TriangleWave>();
+      break;
     }
+
     osc->prepare(currSampleRate);
     osc->setFrequency(freq);
     osc->setAmplitude(amp);
@@ -159,15 +168,12 @@ void Stinky_vstAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
 
   float freq = freqParam->load();
   bool shouldPlay = static_cast<bool>(playParam->load());
-  bool useSaw = static_cast<bool>(oscToggleParam->load());
+  OscillatorTypes oscType =
+      static_cast<OscillatorTypes>(static_cast<int>(oscTypeParam->load()));
 
-  if (useSaw != currentlyUsingSaw) {
-    currentlyUsingSaw = useSaw;
-    oscillatorTypeChanged.store(true);
-  }
-
-  if (oscillatorTypeChanged.exchange(false)) {
-    setOscillatorType(currentlyUsingSaw);
+  if (oscType != currOscillatorType.load()) {
+    currOscillatorType.store(oscType);
+    setOscillatorType(oscType);
   }
 
   for (int channel = 0; channel < totalNumInputChannels; ++channel) {
@@ -216,8 +222,9 @@ Stinky_vstAudioProcessor::createParameters() {
           20000.0f, 220.0f),
       std::make_unique<juce::AudioParameterBool>(
           juce::ParameterID{PluginParameters::PLAY}, "Play", true),
-      std::make_unique<juce::AudioParameterBool>(
+      std::make_unique<juce::AudioParameterInt>(
           juce::ParameterID{PluginParameters::OSCILLATOR_TYPE},
-          "OscillatorType", false),
+          "OscillatorType", OscillatorTypes::Sine, OscillatorTypes::Triangle,
+          OscillatorTypes::Sine),
   };
 }

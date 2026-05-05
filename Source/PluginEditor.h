@@ -28,14 +28,14 @@ private:
   juce::Slider frequencySlider;
   juce::TextButton playBtn;
   juce::Label frequencyLabel{"FrequencyLabel", "Frequency"};
-  juce::TextButton oscillatorToggle;
+  juce::ComboBox oscillatorType;
 
   Stinky_vstAudioProcessor &audioProcessor;
 
   juce::AudioProcessorValueTreeState::SliderAttachment freqSliderAttachment;
   juce::AudioProcessorValueTreeState::ButtonAttachment playBtnAttachment;
-  juce::AudioProcessorValueTreeState::ButtonAttachment
-      oscillatorToggleAttachment;
+  juce::AudioProcessorValueTreeState::ComboBoxAttachment
+      oscillatorTypeAttachment;
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Stinky_vstAudioProcessorEditor)
 };
