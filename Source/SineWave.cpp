@@ -1,16 +1,18 @@
 #include "SineWave.h"
 #include <cmath>
-#include <numbers>
 
 void SineWave::prepare(double sampleRate) {
   currSampleRate = static_cast<float>(sampleRate);
-  timeIncr = 1.0f / currSampleRate;
+  smoothedFreq.reset(sampleRate, 1.0f);
+  smoothedFreq.setCurrentAndTargetValue(getFrequency());
 }
 
 void SineWave::process(float *output, const int numSamples) {
   for (int sample = 0; sample < numSamples; ++sample) {
-    output[sample] =
-        ampli * std::sinf(2.0f * std::numbers::pi_v<float> * freq * currTime);
-    currTime += timeIncr;
+    float freq = smoothedFreq.getNextValue();
+    const float phaseInc = (doublePi * freq) / currSampleRate;
+
+    output[sample] = ampli * std::sinf(currTime);
+    currTime += phaseInc;
   }
 }
