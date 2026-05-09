@@ -10,6 +10,7 @@
 
 #include "Oscillator.h"
 #include "WaveType.h"
+#include "juce_audio_basics/juce_audio_basics.h"
 #include "juce_audio_processors/juce_audio_processors.h"
 #include "juce_core/juce_core.h"
 #include "juce_events/juce_events.h"
@@ -65,23 +66,24 @@ public:
 
   void parameterChanged(const juce::String &id, float newValue) override;
   void handleAsyncUpdate() override;
+  juce::MidiKeyboardState &getKeyboardState() { return keyboardState; }
 
 private:
-  std::vector<std::unique_ptr<Oscillator>> oscillators;
   std::atomic<double> currSampleRate;
 
   juce::AudioProcessorValueTreeState state;
   juce::AudioProcessorValueTreeState::ParameterLayout createParameters();
-  std::atomic<float> *freqParam;
-  std::atomic<float> *playParam;
   std::atomic<float> *oscTypeParam;
 
+  juce::Synthesiser synth;
+  static constexpr int K_VOICES = 8;
+
   struct OscillatorSwapCommand {
-    int channel;
+    int voiceIdx;
     std::unique_ptr<Oscillator> newOscillator;
   };
 
-  static constexpr int FIFO_SIZE = 16;
+  static constexpr int FIFO_SIZE = K_VOICES * 4;
   juce::AbstractFifo fifo{FIFO_SIZE};
   OscillatorSwapCommand swapQueue[FIFO_SIZE];
 
@@ -89,6 +91,10 @@ private:
 
   void onOscillatorTypeChanged(OscillatorTypes type);
   std::atomic<OscillatorTypes> pendingOscillatorType{OscillatorTypes::Sine};
+
+  juce::MidiKeyboardState keyboardState;
+
+  void drainSwapQueue();
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Stinky_vstAudioProcessor)
 };

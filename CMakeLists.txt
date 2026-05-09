@@ -46,6 +46,7 @@ target_sources(stinky_vst
         Source/SineWave.cpp
         Source/SawWave.cpp
         Source/TriangleWave.cpp
+        Source/StinkyVoice.cpp
 )
 
 target_compile_definitions(stinky_vst

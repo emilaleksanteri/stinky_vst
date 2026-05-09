@@ -10,38 +10,15 @@
 #include "PluginParameters.h"
 #include "PluginProcessor.h"
 #include "WaveType.h"
-#include "juce_events/juce_events.h"
 #include "juce_graphics/juce_graphics.h"
 #include "juce_gui_basics/juce_gui_basics.h"
 
 //==============================================================================
 Stinky_vstAudioProcessorEditor::Stinky_vstAudioProcessorEditor(
     Stinky_vstAudioProcessor &p)
-    : AudioProcessorEditor(&p), audioProcessor(p),
-      freqSliderAttachment(audioProcessor.getState(), PluginParameters::FREQ_HZ,
-                           frequencySlider),
-      playBtnAttachment(audioProcessor.getState(), PluginParameters::PLAY,
-                        playBtn) {
+    : AudioProcessorEditor(&p), audioProcessor(p) {
   // Make sure that before the constructor has finished, you've set the
   // editor's size to whatever you need it to be.
-
-  frequencySlider.setSliderStyle(juce::Slider::SliderStyle::LinearVertical);
-  frequencySlider.setTextBoxStyle(juce::Slider::TextBoxBelow, true, 100, 50);
-  addAndMakeVisible(frequencySlider);
-
-  playBtn.setButtonText("Playing");
-  playBtn.setToggleState(true, juce::NotificationType::dontSendNotification);
-  playBtn.setClickingTogglesState(true);
-
-  playBtn.setColour(juce::TextButton::ColourIds::buttonOnColourId,
-                    juce::Colours::green);
-  playBtn.setColour(juce::TextButton::ColourIds::buttonColourId,
-                    juce::Colours::red);
-
-  playBtn.onClick = [this]() {
-    const bool isPlaying = playBtn.getToggleState();
-    playBtn.setButtonText(isPlaying ? "Playing" : "Play");
-  };
 
   oscillatorType.addItem(WaveType::SINE, OscillatorTypes::Sine);
   oscillatorType.addItem(WaveType::SAW, OscillatorTypes::Saw);
@@ -51,13 +28,13 @@ Stinky_vstAudioProcessorEditor::Stinky_vstAudioProcessorEditor(
           audioProcessor.getState(), PluginParameters::OSCILLATOR_TYPE,
           oscillatorType);
 
+  addAndMakeVisible(keyboard);
+  keyboard.setKeyPressBaseOctave(4); // C4
+  keyboard.setLowestVisibleKey(48);  // Start C3
+  setWantsKeyboardFocus(true);
+  keyboard.grabKeyboardFocus();
+
   addAndMakeVisible(oscillatorType);
-
-  addAndMakeVisible(playBtn);
-
-  frequencyLabel.setJustificationType(juce::Justification::centred);
-
-  addAndMakeVisible(frequencyLabel);
 
   setSize(500, 500);
 }
@@ -77,10 +54,9 @@ void Stinky_vstAudioProcessorEditor::paint(juce::Graphics &g) {
 }
 
 void Stinky_vstAudioProcessorEditor::resized() {
-  frequencyLabel.setBounds(getWidth() / 2 - 50, getHeight() / 2 - 120, 100, 20);
-  frequencySlider.setBounds(getWidth() / 2 - 50, getHeight() / 2 - 100, 100,
-                            200);
-  playBtn.setBounds(getWidth() / 2 - 50, getHeight() / 2 + 120, 100, 20);
+  oscillatorType.setBounds(getWidth() / 2 - 50, getHeight() / 2, 100, 60);
 
-  oscillatorType.setBounds(getWidth() / 2 - 50, getHeight() / 2 + 150, 100, 60);
+  auto bounds = getLocalBounds();
+  auto kbHeight = 80;
+  keyboard.setBounds(bounds.removeFromBottom(kbHeight));
 }

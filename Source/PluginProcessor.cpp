@@ -11,6 +11,7 @@
 #include "PluginParameters.h"
 #include "SawWave.h"
 #include "SineWave.h"
+#include "StinkyVoice.h"
 #include "TriangleWave.h"
 #include "WaveType.h"
 #include "juce_audio_processors/juce_audio_processors.h"
@@ -93,19 +94,27 @@ void Stinky_vstAudioProcessor::changeProgramName(int index,
 void Stinky_vstAudioProcessor::prepareToPlay(double sampleRate,
                                              int samplesPerBlock) {
 
-  oscillators.resize((size_t)getTotalNumOutputChannels());
-  currSampleRate.store(sampleRate);
-
-  freqParam = state.getRawParameterValue(PluginParameters::FREQ_HZ);
-  playParam = state.getRawParameterValue(PluginParameters::PLAY);
   oscTypeParam = state.getRawParameterValue(PluginParameters::OSCILLATOR_TYPE);
+  currSampleRate.store(sampleRate);
+  synth.setCurrentPlaybackSampleRate(sampleRate);
+  synth.clearVoices();
+  synth.clearSounds();
+
+  synth.addSound(new StinkySound());
+  for (int i = 0; i < K_VOICES; ++i) {
+    auto *v = new StinkyVoice();
+    v->prepare(sampleRate, samplesPerBlock);
+    synth.addVoice(v);
+  }
 
   fifo.reset();
 
-  auto type = static_cast<OscillatorTypes>((int)oscTypeParam->load());
-  for (auto &osc : oscillators) {
-    osc = makeOscillator(type);
+  auto type = (OscillatorTypes)(int)oscTypeParam->load();
+  for (int i = 0; i < K_VOICES; ++i) {
+    auto osc = makeOscillator(type);
     osc->prepare(sampleRate);
+    static_cast<StinkyVoice *>(synth.getVoice(i))
+        ->swapOscillator(std::move(osc));
   }
 }
 
@@ -155,7 +164,7 @@ Stinky_vstAudioProcessor::makeOscillator(OscillatorTypes type) {
 }
 
 void Stinky_vstAudioProcessor::onOscillatorTypeChanged(OscillatorTypes type) {
-  int neededSize = (int)oscillators.size();
+  int neededSize = K_VOICES;
 
   int start1, size1, start2, size2;
   fifo.prepareToWrite(neededSize, start1, size1, start2, size2);
@@ -168,18 +177,14 @@ void Stinky_vstAudioProcessor::onOscillatorTypeChanged(OscillatorTypes type) {
   for (int i = 0; i < size1; ++i) {
     auto newOsc = makeOscillator(type);
     newOsc->prepare(currSampleRate.load());
-    newOsc->setFrequency(freqParam->load());
-    newOsc->setAmplitude(static_cast<bool>(playParam->load()) ? 0.4f : 0.0f);
     swapQueue[start1 + i] = {i, std::move(newOsc)};
   }
 
   for (int i = 0; i < size2; ++i) {
-    int oscIndex = size1 + i;
+    int voiceIdx = size1 + i;
     auto newOsc = makeOscillator(type);
     newOsc->prepare(currSampleRate.load());
-    newOsc->setFrequency(freqParam->load());
-    newOsc->setAmplitude(static_cast<bool>(playParam->load()) ? 0.4f : 0.0f);
-    swapQueue[start2 + i] = {oscIndex, std::move(newOsc)};
+    swapQueue[start2 + i] = {voiceIdx, std::move(newOsc)};
   }
 
   fifo.finishedWrite(size1 + size2);
@@ -198,38 +203,36 @@ void Stinky_vstAudioProcessor::handleAsyncUpdate() {
   onOscillatorTypeChanged(pendingOscillatorType.load());
 }
 
-void Stinky_vstAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
-                                            juce::MidiBuffer &midiMessages) {
-  juce::ScopedNoDenormals noDenormals;
-  auto totalNumInputChannels = getTotalNumInputChannels();
-  auto totalNumOutputChannels = getTotalNumOutputChannels();
-
-  for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
-    buffer.clear(i, 0, buffer.getNumSamples());
-
-  // Drain swap queue - no allocation, just pointer swaps
+void Stinky_vstAudioProcessor::drainSwapQueue() {
   int start1, size1, start2, size2;
   fifo.prepareToRead(fifo.getNumReady(), start1, size1, start2, size2);
 
-  for (int i = 0; i < size1; ++i)
-    oscillators[(size_t)swapQueue[start1 + i].channel] =
-        std::move(swapQueue[start1 + i].newOscillator);
+  for (int i = 0; i < size1; ++i) {
+    auto &cmd = swapQueue[start1 + i];
+    static_cast<StinkyVoice *>(synth.getVoice(cmd.voiceIdx))
+        ->swapOscillator(std::move(cmd.newOscillator));
+  }
 
-  for (int i = 0; i < size2; ++i)
-    oscillators[(size_t)swapQueue[start2 + i].channel] =
-        std::move(swapQueue[start2 + i].newOscillator);
+  for (int i = 0; i < size2; ++i) {
+    auto &cmd = swapQueue[start2 + i];
+    static_cast<StinkyVoice *>(synth.getVoice(cmd.voiceIdx))
+        ->swapOscillator(std::move(cmd.newOscillator));
+  }
 
   fifo.finishedRead(size1 + size2);
+}
 
-  float freq = freqParam->load();
-  bool shouldPlay = static_cast<bool>(playParam->load());
+void Stinky_vstAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
+                                            juce::MidiBuffer &midiMessages) {
+  juce::ScopedNoDenormals noDenormals;
+  buffer.clear();
 
-  for (int channel = 0; channel < totalNumInputChannels; ++channel) {
-    auto *channelData = buffer.getWritePointer(channel);
-    oscillators[(size_t)channel]->setFrequency(freq);
-    oscillators[(size_t)channel]->setAmplitude(shouldPlay ? 0.4f : 0.0f);
-    oscillators[(size_t)channel]->process(channelData, buffer.getNumSamples());
-  }
+  drainSwapQueue();
+
+  keyboardState.processNextMidiBuffer(midiMessages, 0, buffer.getNumSamples(),
+                                      true);
+
+  synth.renderNextBlock(buffer, midiMessages, 0, buffer.getNumSamples());
 }
 
 //==============================================================================
@@ -265,11 +268,6 @@ juce::AudioProcessor *JUCE_CALLTYPE createPluginFilter() {
 juce::AudioProcessorValueTreeState::ParameterLayout
 Stinky_vstAudioProcessor::createParameters() {
   return {
-      std::make_unique<juce::AudioParameterFloat>(
-          juce::ParameterID{PluginParameters::FREQ_HZ}, "Frequency", 20.0f,
-          20000.0f, 220.0f),
-      std::make_unique<juce::AudioParameterBool>(
-          juce::ParameterID{PluginParameters::PLAY}, "Play", true),
       std::make_unique<juce::AudioParameterInt>(
           juce::ParameterID{PluginParameters::OSCILLATOR_TYPE},
           "OscillatorType", OscillatorTypes::Sine, OscillatorTypes::Triangle,

@@ -9,6 +9,7 @@
 #pragma once
 
 #include "PluginProcessor.h"
+#include "juce_audio_utils/juce_audio_utils.h"
 #include "juce_gui_basics/juce_gui_basics.h"
 #include <JuceHeader.h>
 
@@ -25,18 +26,17 @@ public:
   void resized() override;
 
 private:
-  juce::Slider frequencySlider;
-  juce::TextButton playBtn;
-  juce::Label frequencyLabel{"FrequencyLabel", "Frequency"};
   juce::ComboBox oscillatorType;
 
   Stinky_vstAudioProcessor &audioProcessor;
 
-  juce::AudioProcessorValueTreeState::SliderAttachment freqSliderAttachment;
-  juce::AudioProcessorValueTreeState::ButtonAttachment playBtnAttachment;
-
   std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment>
       oscillatorTypeAttachment;
+
+  juce::MidiKeyboardComponent keyboard{
+      audioProcessor.getKeyboardState(),
+      juce::MidiKeyboardComponent::horizontalKeyboard,
+  };
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Stinky_vstAudioProcessorEditor)
 };
