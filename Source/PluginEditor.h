@@ -34,7 +34,8 @@ private:
 
   juce::AudioProcessorValueTreeState::SliderAttachment freqSliderAttachment;
   juce::AudioProcessorValueTreeState::ButtonAttachment playBtnAttachment;
-  juce::AudioProcessorValueTreeState::ComboBoxAttachment
+
+  std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment>
       oscillatorTypeAttachment;
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Stinky_vstAudioProcessorEditor)

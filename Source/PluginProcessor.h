@@ -9,17 +9,20 @@
 #pragma once
 
 #include "Oscillator.h"
-#include "SawWave.h"
-#include "SineWave.h"
 #include "WaveType.h"
 #include "juce_audio_processors/juce_audio_processors.h"
+#include "juce_core/juce_core.h"
+#include "juce_events/juce_events.h"
 #include <JuceHeader.h>
 #include <memory>
 
 //==============================================================================
 /**
  */
-class Stinky_vstAudioProcessor : public juce::AudioProcessor {
+class Stinky_vstAudioProcessor
+    : public juce::AudioProcessor,
+      public juce::AudioProcessorValueTreeState::Listener,
+      public juce::AsyncUpdater {
 public:
   //==============================================================================
   Stinky_vstAudioProcessor();
@@ -57,20 +60,35 @@ public:
   //==============================================================================
   void getStateInformation(juce::MemoryBlock &destData) override;
   void setStateInformation(const void *data, int sizeInBytes) override;
-  void setOscillatorType(OscillatorTypes oscType);
 
   juce::AudioProcessorValueTreeState &getState() { return state; }
 
+  void parameterChanged(const juce::String &id, float newValue) override;
+  void handleAsyncUpdate() override;
+
 private:
   std::vector<std::unique_ptr<Oscillator>> oscillators;
-  double currSampleRate;
-  std::atomic<OscillatorTypes> currOscillatorType{OscillatorTypes::Sine};
+  std::atomic<double> currSampleRate;
 
   juce::AudioProcessorValueTreeState state;
   juce::AudioProcessorValueTreeState::ParameterLayout createParameters();
   std::atomic<float> *freqParam;
   std::atomic<float> *playParam;
   std::atomic<float> *oscTypeParam;
+
+  struct OscillatorSwapCommand {
+    int channel;
+    std::unique_ptr<Oscillator> newOscillator;
+  };
+
+  static constexpr int FIFO_SIZE = 16;
+  juce::AbstractFifo fifo{FIFO_SIZE};
+  OscillatorSwapCommand swapQueue[FIFO_SIZE];
+
+  std::unique_ptr<Oscillator> makeOscillator(OscillatorTypes type);
+
+  void onOscillatorTypeChanged(OscillatorTypes type);
+  std::atomic<OscillatorTypes> pendingOscillatorType{OscillatorTypes::Sine};
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Stinky_vstAudioProcessor)
 };

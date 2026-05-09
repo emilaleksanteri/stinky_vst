@@ -21,10 +21,7 @@ Stinky_vstAudioProcessorEditor::Stinky_vstAudioProcessorEditor(
       freqSliderAttachment(audioProcessor.getState(), PluginParameters::FREQ_HZ,
                            frequencySlider),
       playBtnAttachment(audioProcessor.getState(), PluginParameters::PLAY,
-                        playBtn),
-      oscillatorTypeAttachment(audioProcessor.getState(),
-                               PluginParameters::OSCILLATOR_TYPE,
-                               oscillatorType) {
+                        playBtn) {
   // Make sure that before the constructor has finished, you've set the
   // editor's size to whatever you need it to be.
 
@@ -49,7 +46,11 @@ Stinky_vstAudioProcessorEditor::Stinky_vstAudioProcessorEditor(
   oscillatorType.addItem(WaveType::SINE, OscillatorTypes::Sine);
   oscillatorType.addItem(WaveType::SAW, OscillatorTypes::Saw);
   oscillatorType.addItem(WaveType::TRIANGLE, OscillatorTypes::Triangle);
-  oscillatorType.setSelectedId(1);
+  oscillatorTypeAttachment =
+      std::make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment>(
+          audioProcessor.getState(), PluginParameters::OSCILLATOR_TYPE,
+          oscillatorType);
+
   addAndMakeVisible(oscillatorType);
 
   addAndMakeVisible(playBtn);
