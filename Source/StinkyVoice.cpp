@@ -5,6 +5,7 @@ void StinkyVoice::prepare(double sr, int maxBlock) {
   setCurrentPlaybackSampleRate(sr);
   scratch.setSize(1, maxBlock, false, false, true);
   scratch.clear();
+  breath.prepare(sr);
 }
 
 void StinkyVoice::swapOscillator(std::unique_ptr<Oscillator> newOsc) {
@@ -23,8 +24,10 @@ bool StinkyVoice::canPlaySound(juce::SynthesiserSound *sound) {
 void StinkyVoice::startNote(int note, float vel, juce::SynthesiserSound *,
                             int) {
   currentVelocity = vel;
-  osc->setFrequency((float)juce::MidiMessage::getMidiNoteInHertz(note));
+  float freq = (float)juce::MidiMessage::getMidiNoteInHertz(note);
+  osc->setFrequency(freq);
   osc->setAmplitude(1.0f); // default
+  breath.setFreq(freq);
   adsr.setParameters(adsrParams);
   adsr.noteOn();
 }
@@ -48,6 +51,10 @@ void StinkyVoice::renderNextBlock(juce::AudioBuffer<float> &buffer, int start,
 
   auto *s = scratch.getWritePointer(0);
   osc->process(s, n);
+
+  for (int i = 0; i < n; ++i) {
+    s[i] += breath.getNextSample();
+  }
 
   juce::FloatVectorOperations::multiply(s, currentVelocity * 0.4f, n);
 

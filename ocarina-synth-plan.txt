@@ -9,17 +9,19 @@ For Ocarina Synth:
 1. Oscillator
 2. Breath noise generator (note freq)
 3. Formant/BandPass Filter (note freq)
-4. ADSR (already per note freq/voice)
-5. Reverb (global)
-6. Some Gain limiter (global)
+4. Maybe some sort of a vibrato
+5. ADSR (already per note freq/voice)
+6. Reverb (global)
+7. Some Gain limiter (global)
 
 Pipeline:
 Input -> Oscillator -> Breath -> Formant -> ADSR -> Reverb -> Limiter -> Output
 
 To build:
-1. Breath voice generator filter
-2. Formant Filter
-3. Reverb
-4. Gain Limiter
-5. Audio processing pipeline
+1. Breath voice generator filter [x]
+2. Formant Filter []
+3. Reverb []
+4. Gain Limiter []
+5. Audio processing pipeline []
+6. Optional vibrato []
 

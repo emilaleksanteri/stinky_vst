@@ -1,5 +1,6 @@
 
 
+#include "BreathSound.h"
 #include "Oscillator.h"
 #include "SineWave.h"
 #include "StinkySound.h"
@@ -28,6 +29,8 @@ private:
   juce::ADSR adsr;
   juce::ADSR::Parameters adsrParams; // refreshed from APVTS each block
   juce::AudioBuffer<float> scratch;
+
+  StinkyBreath breath;
 
   float currentVelocity = 0.0f;
 };

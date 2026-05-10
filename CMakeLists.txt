@@ -47,6 +47,7 @@ target_sources(stinky_vst
         Source/SawWave.cpp
         Source/TriangleWave.cpp
         Source/StinkyVoice.cpp
+        Source/BreathSound.cpp
 )
 
 target_compile_definitions(stinky_vst
@@ -59,6 +60,7 @@ target_compile_definitions(stinky_vst
 target_link_libraries(stinky_vst
     PRIVATE
         juce::juce_audio_utils
+        juce::juce_dsp
     PUBLIC
         juce::juce_recommended_config_flags
         juce::juce_recommended_lto_flags
