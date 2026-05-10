@@ -13,6 +13,16 @@
 #include "juce_graphics/juce_graphics.h"
 #include "juce_gui_basics/juce_gui_basics.h"
 
+namespace {
+const auto kAccent = juce::Colour::fromRGB(170, 240, 130);
+const auto kAccentDim = juce::Colour::fromRGB(70, 110, 60);
+const auto kPanel = juce::Colour::fromRGB(28, 36, 30);
+const auto kPanelDeep = juce::Colour::fromRGB(15, 20, 16);
+const auto kBg = juce::Colour::fromRGB(20, 26, 22);
+const auto kText = juce::Colour::fromRGB(220, 235, 210);
+const auto kSubtle = juce::Colour::fromRGB(140, 170, 130);
+} // namespace
+
 //==============================================================================
 Stinky_vstAudioProcessorEditor::Stinky_vstAudioProcessorEditor(
     Stinky_vstAudioProcessor &p)
@@ -24,10 +34,10 @@ Stinky_vstAudioProcessorEditor::Stinky_vstAudioProcessorEditor(
       sustainConfigAttachment(audioProcessor.getState(),
                               PluginParameters::SUSTAIN_CONFIG, sustainConfig),
       releaseConfigAttachment(audioProcessor.getState(),
-                              PluginParameters::RELEASE_CONFIG, releaseConfig) {
-  // Make sure that before the constructor has finished, you've set the
-  // editor's size to whatever you need it to be.
+                              PluginParameters::RELEASE_CONFIG,
+                              releaseConfig) {
 
+  // ---- oscillator combo
   oscillatorType.addItem(WaveType::SINE, OscillatorTypes::Sine);
   oscillatorType.addItem(WaveType::SAW, OscillatorTypes::Saw);
   oscillatorType.addItem(WaveType::TRIANGLE, OscillatorTypes::Triangle);
@@ -36,76 +46,128 @@ Stinky_vstAudioProcessorEditor::Stinky_vstAudioProcessorEditor(
           audioProcessor.getState(), PluginParameters::OSCILLATOR_TYPE,
           oscillatorType);
 
-  addAndMakeVisible(keyboard);
-  keyboard.setKeyPressBaseOctave(4); // C4
-  keyboard.setLowestVisibleKey(48);  // Start C3
-  setWantsKeyboardFocus(true);
-  keyboard.grabKeyboardFocus();
-
+  oscillatorType.setColour(juce::ComboBox::backgroundColourId, kPanel);
+  oscillatorType.setColour(juce::ComboBox::textColourId, kText);
+  oscillatorType.setColour(juce::ComboBox::outlineColourId, kAccentDim);
+  oscillatorType.setColour(juce::ComboBox::arrowColourId, kAccent);
+  oscillatorType.setColour(juce::ComboBox::buttonColourId, kPanel);
   addAndMakeVisible(oscillatorType);
 
-  attackConfig.setSliderStyle(juce::Slider::SliderStyle::LinearVertical);
-  attackConfig.setTextBoxStyle(juce::Slider::TextBoxBelow, true, 100, 50);
-  addAndMakeVisible(attackConfig);
+  // ---- ADSR knobs
+  auto styleKnob = [&](juce::Slider &s, bool skewToShortValues) {
+    s.setSliderStyle(juce::Slider::SliderStyle::RotaryVerticalDrag);
+    s.setTextBoxStyle(juce::Slider::TextBoxBelow, false, 64, 16);
+    s.setColour(juce::Slider::rotarySliderFillColourId, kAccent);
+    s.setColour(juce::Slider::rotarySliderOutlineColourId, kAccentDim);
+    s.setColour(juce::Slider::thumbColourId, kText);
+    s.setColour(juce::Slider::textBoxTextColourId, kText);
+    s.setColour(juce::Slider::textBoxBackgroundColourId,
+                juce::Colours::transparentBlack);
+    s.setColour(juce::Slider::textBoxOutlineColourId,
+                juce::Colours::transparentBlack);
+    s.setNumDecimalPlacesToDisplay(2);
+    if (skewToShortValues)
+      s.setSkewFactorFromMidPoint(0.3); // finer control near 0
+    addAndMakeVisible(s);
+  };
 
-  decayConfig.setSliderStyle(juce::Slider::SliderStyle::LinearVertical);
-  decayConfig.setTextBoxStyle(juce::Slider::TextBoxBelow, true, 100, 50);
-  addAndMakeVisible(decayConfig);
+  styleKnob(attackConfig, true);
+  styleKnob(decayConfig, true);
+  styleKnob(sustainConfig, false); // sustain is a level — linear feels right
+  styleKnob(releaseConfig, true);
 
-  sustainConfig.setSliderStyle(juce::Slider::SliderStyle::LinearVertical);
-  sustainConfig.setTextBoxStyle(juce::Slider::TextBoxBelow, true, 100, 50);
-  addAndMakeVisible(sustainConfig);
+  // ---- labels
+  auto styleLabel = [&](juce::Label &l) {
+    l.setColour(juce::Label::textColourId, kSubtle);
+    l.setJustificationType(juce::Justification::centred);
+    l.setFont(juce::FontOptions(12.0f));
+    addAndMakeVisible(l);
+  };
+  styleLabel(attackLabel);
+  styleLabel(decayLabel);
+  styleLabel(sustainLabel);
+  styleLabel(releaseLabel);
 
-  releaseConfig.setSliderStyle(juce::Slider::SliderStyle::LinearVertical);
-  releaseConfig.setTextBoxStyle(juce::Slider::TextBoxBelow, true, 100, 50);
-  addAndMakeVisible(releaseConfig);
+  // ---- keyboard
+  keyboard.setColour(juce::MidiKeyboardComponent::whiteNoteColourId, kPanel);
+  keyboard.setColour(juce::MidiKeyboardComponent::blackNoteColourId,
+                     kPanelDeep);
+  keyboard.setColour(juce::MidiKeyboardComponent::keySeparatorLineColourId,
+                     kAccentDim);
+  keyboard.setColour(juce::MidiKeyboardComponent::mouseOverKeyOverlayColourId,
+                     kAccent.withAlpha(0.4f));
+  keyboard.setColour(juce::MidiKeyboardComponent::keyDownOverlayColourId,
+                     kAccent.withAlpha(0.7f));
+  keyboard.setColour(juce::MidiKeyboardComponent::textLabelColourId, kSubtle);
+  keyboard.setKeyPressBaseOctave(4);
+  keyboard.setLowestVisibleKey(48);
+  setWantsKeyboardFocus(true);
+  addAndMakeVisible(keyboard);
 
-  attackLabel.setJustificationType(juce::Justification::centred);
-  addAndMakeVisible(attackLabel);
-
-  decayLabel.setJustificationType(juce::Justification::centred);
-  addAndMakeVisible(decayLabel);
-
-  sustainLabel.setJustificationType(juce::Justification::centred);
-  addAndMakeVisible(sustainLabel);
-
-  releaseLabel.setJustificationType(juce::Justification::centred);
-  addAndMakeVisible(releaseLabel);
-
-  setSize(500, 500);
+  setSize(560, 420);
 }
 
 Stinky_vstAudioProcessorEditor::~Stinky_vstAudioProcessorEditor() {}
 
 //==============================================================================
 void Stinky_vstAudioProcessorEditor::paint(juce::Graphics &g) {
-  // (Our component is opaque, so we must completely fill the background with a
-  // solid colour)
-  g.fillAll(juce::Colours::limegreen);
+  g.fillAll(kBg);
 
-  g.setColour(juce::Colours::black);
-  g.setFont(juce::FontOptions(30.0f));
-  g.drawFittedText("STINKY VST", getLocalBounds(), juce::Justification::topLeft,
-                   1);
+  // header strip
+  auto header = getLocalBounds().removeFromTop(56);
+  g.setColour(kPanelDeep);
+  g.fillRect(header);
+  g.setColour(kAccentDim);
+  g.fillRect(header.removeFromBottom(1)); // 1px separator under header
+
+  // title
+  auto headerInner = getLocalBounds().removeFromTop(56).reduced(20, 0);
+  g.setColour(kAccent);
+  g.setFont(juce::FontOptions(28.0f).withStyle("Bold"));
+  g.drawFittedText("STINKY", headerInner, juce::Justification::centredLeft, 1);
+
+  g.setColour(kSubtle);
+  g.setFont(juce::FontOptions(12.0f));
+  g.drawFittedText("polyphonic synth", headerInner,
+                   juce::Justification::centredRight, 1);
+
+  // adsr panel background
+  auto bounds = getLocalBounds();
+  bounds.removeFromTop(56);                         // header
+  bounds.removeFromBottom(110);                     // keyboard
+  auto adsrPanel = bounds.reduced(16, 8);
+  g.setColour(kPanel.withAlpha(0.45f));
+  g.fillRoundedRectangle(adsrPanel.toFloat(), 8.0f);
+  g.setColour(kAccentDim);
+  g.drawRoundedRectangle(adsrPanel.toFloat(), 8.0f, 1.0f);
 }
 
 void Stinky_vstAudioProcessorEditor::resized() {
-  oscillatorType.setBounds(getWidth() / 2 - 50, 4, 100, 60);
-
-  attackConfig.setBounds(getWidth() / 2 - 200, getHeight() / 2 - 100, 100, 200);
-  attackLabel.setBounds(getWidth() / 2 - 200, getHeight() / 2 - 140, 100, 20);
-
-  decayConfig.setBounds(getWidth() / 2 - 100, getHeight() / 2 - 100, 100, 200);
-  decayLabel.setBounds(getWidth() / 2 - 100, getHeight() / 2 - 140, 100, 20);
-
-  sustainConfig.setBounds(getWidth() / 2, getHeight() / 2 - 100, 100, 200);
-  sustainLabel.setBounds(getWidth() / 2, getHeight() / 2 - 140, 100, 20);
-
-  releaseConfig.setBounds(getWidth() / 2 + 100, getHeight() / 2 - 100, 100,
-                          200);
-  releaseLabel.setBounds(getWidth() / 2 + 100, getHeight() / 2 - 140, 100, 20);
-
   auto bounds = getLocalBounds();
-  auto kbHeight = 80;
-  keyboard.setBounds(bounds.removeFromBottom(kbHeight));
+
+  bounds.removeFromTop(56); // header (drawn in paint)
+
+  // oscillator combo: top-right of the working area
+  auto oscRow = bounds.removeFromTop(48).reduced(20, 8);
+  oscillatorType.setBounds(oscRow.removeFromRight(140));
+
+  // keyboard pinned to the bottom
+  keyboard.setBounds(bounds.removeFromBottom(110));
+
+  // ADSR knobs row (one column per knob, label on top, knob below)
+  auto adsr = bounds.reduced(24, 12);
+  const int colW = adsr.getWidth() / 4;
+  const int labelH = 18;
+
+  auto layoutKnob = [&](juce::Label &lbl, juce::Slider &knob,
+                        juce::Rectangle<int> col) {
+    lbl.setBounds(col.removeFromTop(labelH));
+    col.removeFromTop(2);
+    knob.setBounds(col.reduced(6, 0));
+  };
+
+  layoutKnob(attackLabel, attackConfig, adsr.removeFromLeft(colW));
+  layoutKnob(decayLabel, decayConfig, adsr.removeFromLeft(colW));
+  layoutKnob(sustainLabel, sustainConfig, adsr.removeFromLeft(colW));
+  layoutKnob(releaseLabel, releaseConfig, adsr);
 }
