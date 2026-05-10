@@ -38,14 +38,6 @@ private:
   std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment>
       oscillatorTypeAttachment;
 
-  juce::AudioProcessorValueTreeState::SliderAttachment attackConfigAttachment;
-
-  juce::AudioProcessorValueTreeState::SliderAttachment decayConfigAttachment;
-
-  juce::AudioProcessorValueTreeState::SliderAttachment sustainConfigAttachment;
-
-  juce::AudioProcessorValueTreeState::SliderAttachment releaseConfigAttachment;
-
   juce::MidiKeyboardComponent keyboard{
       audioProcessor.getKeyboardState(),
       juce::MidiKeyboardComponent::horizontalKeyboard,
@@ -62,6 +54,14 @@ private:
 
   juce::Slider releaseConfig;
   juce::Label releaseLabel{"ReleaseLabel", "Release"};
+
+  juce::AudioProcessorValueTreeState::SliderAttachment attackConfigAttachment;
+
+  juce::AudioProcessorValueTreeState::SliderAttachment decayConfigAttachment;
+
+  juce::AudioProcessorValueTreeState::SliderAttachment sustainConfigAttachment;
+
+  juce::AudioProcessorValueTreeState::SliderAttachment releaseConfigAttachment;
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Stinky_vstAudioProcessorEditor)
 };

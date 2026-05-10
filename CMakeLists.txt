@@ -28,11 +28,11 @@ juce_add_plugin(stinky_vst
     PLUGIN_CODE                 Mdfp
     FORMATS                     VST3 AU Standalone
     PRODUCT_NAME                "stinky_vst"
-    IS_SYNTH                    FALSE
-    NEEDS_MIDI_INPUT            FALSE
+    IS_SYNTH                    TRUE
+    NEEDS_MIDI_INPUT            TRUE
     NEEDS_MIDI_OUTPUT           FALSE
     IS_MIDI_EFFECT              FALSE
-    EDITOR_WANTS_KEYBOARD_FOCUS FALSE
+    EDITOR_WANTS_KEYBOARD_FOCUS TRUE
     COPY_PLUGIN_AFTER_BUILD     TRUE
 )
 
@@ -63,4 +63,10 @@ target_link_libraries(stinky_vst
         juce::juce_recommended_config_flags
         juce::juce_recommended_lto_flags
         juce::juce_recommended_warning_flags
+)
+
+# Debug-only: promote member-init-order warnings to errors so reorder
+# bugs blow up the build instead of crashing at runtime.
+target_compile_options(stinky_vst PRIVATE
+    $<$<CONFIG:Debug>:-Werror=reorder>
 )

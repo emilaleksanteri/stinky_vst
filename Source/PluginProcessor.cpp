@@ -233,6 +233,18 @@ void Stinky_vstAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
   juce::ScopedNoDenormals noDenormals;
   buffer.clear();
 
+  const float attack = attackParam->load();
+  const float decay = decayParam->load();
+  const float sustain = sustainParam->load();
+  const float release = releaseParam->load();
+  for (int i = 0; i < synth.getNumVoices(); ++i) {
+    auto *v = static_cast<StinkyVoice *>(synth.getVoice(i));
+    v->setAttack(attack);
+    v->setDecay(decay);
+    v->setSustain(sustain);
+    v->setRelease(release);
+  }
+
   drainSwapQueue();
 
   keyboardState.processNextMidiBuffer(midiMessages, 0, buffer.getNumSamples(),
@@ -286,7 +298,7 @@ Stinky_vstAudioProcessor::createParameters() {
           0.0f, 5.0f, 0.1f),
       std::make_unique<juce::AudioParameterFloat>(
           juce::ParameterID{PluginParameters::SUSTAIN_CONFIG}, "SustainConfig",
-          0.0f, 30.0f, 1.0f),
+          0.0f, 1.0f, 0.7f),
       std::make_unique<juce::AudioParameterFloat>(
           juce::ParameterID{PluginParameters::RELEASE_CONFIG}, "ReleaseConfig",
           0.0f, 5.0f, 0.1f),
