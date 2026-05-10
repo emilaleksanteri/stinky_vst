@@ -1,6 +1,7 @@
 
 
 #include "BreathSound.h"
+#include "FormantFilter.h"
 #include "Oscillator.h"
 #include "SineWave.h"
 #include "StinkySound.h"
@@ -31,6 +32,7 @@ private:
   juce::AudioBuffer<float> scratch;
 
   StinkyBreath breath;
+  FormantFilter formant;
 
   float currentVelocity = 0.0f;
 };

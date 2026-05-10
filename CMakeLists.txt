@@ -48,6 +48,7 @@ target_sources(stinky_vst
         Source/TriangleWave.cpp
         Source/StinkyVoice.cpp
         Source/BreathSound.cpp
+        Source/FormantFilter.cpp
 )
 
 target_compile_definitions(stinky_vst

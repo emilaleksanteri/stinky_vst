@@ -6,6 +6,7 @@ void StinkyVoice::prepare(double sr, int maxBlock) {
   scratch.setSize(1, maxBlock, false, false, true);
   scratch.clear();
   breath.prepare(sr);
+  formant.prepare(sr);
 }
 
 void StinkyVoice::swapOscillator(std::unique_ptr<Oscillator> newOsc) {
@@ -28,6 +29,7 @@ void StinkyVoice::startNote(int note, float vel, juce::SynthesiserSound *,
   osc->setFrequency(freq);
   osc->setAmplitude(1.0f); // default
   breath.setFreq(freq);
+  formant.setFreq(freq);
   adsr.setParameters(adsrParams);
   adsr.noteOn();
 }
@@ -54,6 +56,10 @@ void StinkyVoice::renderNextBlock(juce::AudioBuffer<float> &buffer, int start,
 
   for (int i = 0; i < n; ++i) {
     s[i] += breath.getNextSample();
+  }
+
+  for (int i = 0; i < n; ++i) {
+    s[i] += formant.processSample(s[i]);
   }
 
   juce::FloatVectorOperations::multiply(s, currentVelocity * 0.4f, n);

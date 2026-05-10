@@ -19,7 +19,7 @@ Input -> Oscillator -> Breath -> Formant -> ADSR -> Reverb -> Limiter -> Output
 
 To build:
 1. Breath voice generator filter [x]
-2. Formant Filter []
+2. Formant Filter [x]
 3. Reverb []
 4. Gain Limiter []
 5. Audio processing pipeline []

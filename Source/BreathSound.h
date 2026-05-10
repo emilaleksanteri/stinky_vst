@@ -20,7 +20,6 @@ private:
 
   juce::Random random;
   juce::dsp::IIR::Filter<float> filter;
-  juce::dsp::IIR::Filter<float> filterLow;
 };
 
 #endif // BREATHSOUND_H
