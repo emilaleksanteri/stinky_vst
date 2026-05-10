@@ -9,6 +9,7 @@
 #pragma once
 
 #include "PluginProcessor.h"
+#include "WaveformView.h"
 #include "juce_audio_utils/juce_audio_utils.h"
 #include "juce_gui_basics/juce_gui_basics.h"
 #include <JuceHeader.h>
@@ -62,6 +63,8 @@ private:
   juce::AudioProcessorValueTreeState::SliderAttachment sustainConfigAttachment;
 
   juce::AudioProcessorValueTreeState::SliderAttachment releaseConfigAttachment;
+
+  WaveformView waveformView{audioProcessor.getState()};
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Stinky_vstAudioProcessorEditor)
 };

@@ -88,6 +88,10 @@ Stinky_vstAudioProcessorEditor::Stinky_vstAudioProcessorEditor(
   styleLabel(sustainLabel);
   styleLabel(releaseLabel);
 
+  // ---- waveform preview
+  waveformView.setColours(kPanelDeep, kAccentDim, kAccent, kSubtle);
+  addAndMakeVisible(waveformView);
+
   // ---- keyboard
   keyboard.setColour(juce::MidiKeyboardComponent::whiteNoteColourId, kPanel);
   keyboard.setColour(juce::MidiKeyboardComponent::blackNoteColourId,
@@ -147,9 +151,13 @@ void Stinky_vstAudioProcessorEditor::resized() {
 
   bounds.removeFromTop(56); // header (drawn in paint)
 
-  // oscillator combo: top-right of the working area
-  auto oscRow = bounds.removeFromTop(48).reduced(20, 8);
-  oscillatorType.setBounds(oscRow.removeFromRight(140));
+  // top row: oscillator combo on the left, waveform preview taking the rest
+  auto topRow = bounds.removeFromTop(96).reduced(20, 10);
+  auto comboArea = topRow.removeFromLeft(150);
+  oscillatorType.setBounds(
+      comboArea.withSizeKeepingCentre(comboArea.getWidth(), 32));
+  topRow.removeFromLeft(12); // gap
+  waveformView.setBounds(topRow);
 
   // keyboard pinned to the bottom
   keyboard.setBounds(bounds.removeFromBottom(110));
