@@ -100,6 +100,15 @@ void Stinky_vstAudioProcessor::prepareToPlay(double sampleRate,
   sustainParam = state.getRawParameterValue(PluginParameters::SUSTAIN_CONFIG);
   releaseParam = state.getRawParameterValue(PluginParameters::RELEASE_CONFIG);
 
+  reverb.reset();
+  reverbParams.roomSize = 0.5f;
+  reverbParams.damping = 0.5f;
+  reverbParams.wetLevel = 0.3f;
+  reverbParams.dryLevel = 0.7f;
+  reverbParams.freezeMode = 0.0f;
+  reverb.setParameters(reverbParams);
+  reverb.setSampleRate(sampleRate);
+
   synth.clearVoices();
   synth.clearSounds();
 
@@ -251,6 +260,13 @@ void Stinky_vstAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
                                       true);
 
   synth.renderNextBlock(buffer, midiMessages, 0, buffer.getNumSamples());
+
+  if (buffer.getNumChannels() == 1) {
+    reverb.processMono(buffer.getWritePointer(0), buffer.getNumSamples());
+  } else if (buffer.getNumChannels() >= 2) {
+    reverb.processStereo(buffer.getWritePointer(0), buffer.getWritePointer(1),
+                         buffer.getNumSamples());
+  }
 }
 
 //==============================================================================
