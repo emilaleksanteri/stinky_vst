@@ -95,10 +95,16 @@ void Stinky_vstAudioProcessor::prepareToPlay(double sampleRate,
                                              int samplesPerBlock) {
 
   oscTypeParam = state.getRawParameterValue(PluginParameters::OSCILLATOR_TYPE);
-  currSampleRate.store(sampleRate);
-  synth.setCurrentPlaybackSampleRate(sampleRate);
+  attackParam = state.getRawParameterValue(PluginParameters::ATTACK_CONFIG);
+  decayParam = state.getRawParameterValue(PluginParameters::DECAY_CONFIG);
+  sustainParam = state.getRawParameterValue(PluginParameters::SUSTAIN_CONFIG);
+  releaseParam = state.getRawParameterValue(PluginParameters::RELEASE_CONFIG);
+
   synth.clearVoices();
   synth.clearSounds();
+
+  currSampleRate.store(sampleRate);
+  synth.setCurrentPlaybackSampleRate(sampleRate);
 
   synth.addSound(new StinkySound());
   for (int i = 0; i < K_VOICES; ++i) {
@@ -272,5 +278,17 @@ Stinky_vstAudioProcessor::createParameters() {
           juce::ParameterID{PluginParameters::OSCILLATOR_TYPE},
           "OscillatorType", OscillatorTypes::Sine, OscillatorTypes::Triangle,
           OscillatorTypes::Sine),
+      std::make_unique<juce::AudioParameterFloat>(
+          juce::ParameterID{PluginParameters::ATTACK_CONFIG}, "AttackConfig",
+          0.0f, 5.0f, 0.1f),
+      std::make_unique<juce::AudioParameterFloat>(
+          juce::ParameterID{PluginParameters::DECAY_CONFIG}, "DecayConfig",
+          0.0f, 5.0f, 0.1f),
+      std::make_unique<juce::AudioParameterFloat>(
+          juce::ParameterID{PluginParameters::SUSTAIN_CONFIG}, "SustainConfig",
+          0.0f, 30.0f, 1.0f),
+      std::make_unique<juce::AudioParameterFloat>(
+          juce::ParameterID{PluginParameters::RELEASE_CONFIG}, "ReleaseConfig",
+          0.0f, 5.0f, 0.1f),
   };
 }

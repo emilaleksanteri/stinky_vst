@@ -71,6 +71,11 @@ public:
 private:
   std::atomic<double> currSampleRate;
 
+  std::atomic<float> *attackParam;
+  std::atomic<float> *decayParam;
+  std::atomic<float> *sustainParam;
+  std::atomic<float> *releaseParam;
+
   juce::AudioProcessorValueTreeState state;
   juce::AudioProcessorValueTreeState::ParameterLayout createParameters();
   std::atomic<float> *oscTypeParam;

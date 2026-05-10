@@ -18,6 +18,11 @@ public:
   void pitchWheelMoved(int) override {}
   void controllerMoved(int, int) override {}
 
+  void setAttack(float attack) { adsrParams.attack = attack; }
+  void setDecay(float decay) { adsrParams.decay = decay; }
+  void setSustain(float sustain) { adsrParams.sustain = sustain; }
+  void setRelease(float release) { adsrParams.release = release; }
+
 private:
   std::unique_ptr<Oscillator> osc = std::make_unique<SineWave>();
   juce::ADSR adsr;
